@@ -4,8 +4,13 @@ from scipy import special
 
 def is_result_nan(lower, upper):
     result = special.softmax([lower, lower, upper])
-    print(result)
-    return np.isnan(result).any()
+    # print(result)
+    return np.all(np.isnan(result))
+
+def is_result_inf(lower, upper):
+    result = special.softmax([lower, lower, upper])
+    # print(result)
+    return np.all(np.isposinf(result))
 
 def binary_search_nan_bound(lower_bound, upper_bound):
     # between a lower and upper bound number
@@ -17,9 +22,24 @@ def binary_search_nan_bound(lower_bound, upper_bound):
 
     lo_num = lower_bound
     hi_num = upper_bound
-    mid = (hi_num) / 2
+    error_margin = 1e300
+    threshold = None
 
+    while (hi_num - lo_num) > error_margin:
+        mid = lo_num/2 + hi_num/2
+        # print(lo_num, mid, hi_num)
+        # print(threshold)
+        # input("Press Enter to continue...")
+        if is_result_nan(lo_num, mid):
+            hi_num = mid
+        else: 
+            threshold = mid
+            lo_num = mid
+
+    return (lo_num, hi_num, threshold)
+    """
     while (mid <= hi_num):
+        
         print(lo_num, mid, hi_num)
         input("Press Enter to continue...")
         
@@ -49,7 +69,8 @@ def binary_search_nan_bound(lower_bound, upper_bound):
         # else low_result and high_result are either True/False or False/True
         # True/False means "on the right track but no precise answer"
         # False/True means something bad has happened
-    return (lo_num, hi_num)
+        """
+    #return (lo_num, hi_num)
     #mid = (lo_num + hi_num) / 2
         
 
@@ -72,7 +93,7 @@ if __name__ == "__main__":
 
     # print("World Hello")
 
-    #big_number = np.finfo(np.float64).max
+    big_number = np.finfo(np.float64).max
     #np.float64 max not big enough for NAN
 
     #big_number = np.iinfo(np.uintp).max
@@ -80,5 +101,8 @@ if __name__ == "__main__":
 
     # big_number = np.finfo(np.float128).max
     #np.longdouble max not big enough for NAN
+    print( big_number )
+    low_num, high_num, threshold = binary_search_nan_bound(1, big_number)
 
-    print( binary_search_nan_bound(1, 1e500) )
+    print("special.softmax([", low_num, ", ", low_num, ", ", high_num, "]) = ", special.softmax([low_num, low_num, high_num]))
+    print("threshold before all results NAN = ", threshold)
